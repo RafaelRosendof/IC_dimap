@@ -45,15 +45,6 @@ linear decay and Gaussian Fan-In
 
 
 
-off topic:
+para o treinamento deve ser utilizado dados etiquetados ou seja audio e sua escrita correspondente e para isso seria meio chato de achar mas daria certo, ficaria bem melhor para o modelo treinar usando esse método 
 
-	preciso ver como que treina o whisper
-	como que se usa a base de dados para treinar 
-	se é com somente audio ou com audio e texto tudo junto 
-
-preciso ver como que coloca ele para treinar e como que integra os dados junto com o audio 
-
-entender sobre a arquitetura do whisper 
-testar e entender as diferenças do modelo da meta para o whisper e com isso definir qual devo utilizar 
-
-ler e anotar os principais tópicos do artigo do whisper 
+no mais o próximo passo é testar o modelo da meta
