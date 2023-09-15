@@ -1,0 +1,59 @@
+abstract e introduction:
+
+o final tuning pode ser prejudicado caso o decodificador não seja treinado 
+
+Se o modelo for bom no caso do whisper e com uma base de dados boa, não seria
+muito util um treinamento desse se o decodificador não é condizente com o modelo
+pois é o decodificador que transforma os logs de mel em texto
+
+Os modelos pré treinados em dados supervisionados são bem melhores, mas existe
+um grande problema que é a falta desses datasets que o maior tem 5140 horas 
+enquanto outro data tem 1 milhão.
+
+parte tirada da introdução 
+
+data processing:
+
+O modelo do whisper foi pensado para prever o texto bruto das transcrições sem qualquer padronização
+
+Isso elimina a necessidade de uma etapa separada de normalização de texto inversa para produzir transcrições naturalísticas
+
+Foi construido um conjunto de dados a partir de audios que estão emparelhados com transcrições na internet
+
+Os arquivos de audio foram quebrados em segmentos pares de 30 segundos 
+tbm foi sorteado aleatóriamente audios para a verificação 
+
+Model:
+Foi escolhido um encoder-decoder Transformer como arquitetura audios com 16.000hz e 80 canais log-magnetude Mel spectogram em uma janela de 25-milliseconds e com um stride de 10
+
+O processo de encoder foi feito com duas camadas conv1D e um filtro de tamanho 3 e a ativação GELU e o segundo layer tem stride 2
+ a cada saida do encoder é passado por uma senoide e daí os blocos do transformador são aplicados 
+
+Foi usada a arquitetura GPT2
+
+Pós treinamento:
+Observar os gráficos da figura 3 e 4
+
+
+batch_size = 256
+
+optimazer = AdamW
+
+beta 1 e beta 2 = 0.9 e 0.98
+
+linear decay and Gaussian Fan-In
+
+
+
+off topic:
+
+	preciso ver como que treina o whisper
+	como que se usa a base de dados para treinar 
+	se é com somente audio ou com audio e texto tudo junto 
+
+preciso ver como que coloca ele para treinar e como que integra os dados junto com o audio 
+
+entender sobre a arquitetura do whisper 
+testar e entender as diferenças do modelo da meta para o whisper e com isso definir qual devo utilizar 
+
+ler e anotar os principais tópicos do artigo do whisper 
