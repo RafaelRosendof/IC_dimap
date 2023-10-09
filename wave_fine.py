@@ -6,8 +6,8 @@
 !pip install jiwer
 
 # Importação das bibliotecas
-from huggingface_hub import notebook_login
-notebook_login(api_key="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")
+#from huggingface_hub import notebook_login
+#notebook_login(api_key="")
 
 
 
