@@ -148,7 +148,7 @@ def main():
     print("Input array shape:", common_voice_train[rand_int]["audio"]["array"].shape)
     print("Sampling rate:", common_voice_train[rand_int]["audio"]["sampling_rate"])
 
-    def prepare_dataset(batch)
+    prepare_dataset(batch)
 
     common_voice_train = common_voice_train.map(prepare_dataset, remove_columns=common_voice_train.column_names, num_proc=4)
     common_voice_test = common_voice_test.map(prepare_dataset, remove_columns=common_voice_test.column_names, num_proc=4)
@@ -206,7 +206,7 @@ def main():
     )
 
 # Treinamento do modelo
-trainer.train()
+    trainer.train()
 
 if __name__ == "__main__":
     main()
