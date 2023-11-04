@@ -1,17 +1,16 @@
 # Instalação das bibliotecas necessárias
-!pip install datasets==1.13.3
-!pip install transformers==4.11.3
-!pip install torchaudio
-!pip install librosa
-!pip install jiwer
+
 
 # Importação das bibliotecas
-#from huggingface_hub import notebook_login
-#notebook_login(api_key="")
+#from transformers import AutoModel
 
+#access_token = "" #hugginface token
+
+#model = AutoModel.from_pretrained("Modelo que vai ser carregado", token=access_token)
 
 
 from datasets import load_dataset, load_metric, Audio
+import re
 
 # Carregando os dados do conjunto de dados Common Voice em português
 common_voice_train = load_dataset("common_voice", "pt", split="train+validation")
@@ -199,14 +198,14 @@ training_args = TrainingArguments(
     per_device_train_batch_size=2,
     gradient_accumulation_steps=2,
     evaluation_strategy="steps",
-    num_train_epochs=1,
+    num_train_epochs=5,
     fp16=True,
-    save_steps=5,
+    save_steps=10,
     eval_steps=5,
     logging_steps=2,
     learning_rate=3e-4,
     warmup_steps=50,
-    save_total_limit=2,
+    save_total_limit=10,
 )
 
 # Configuração do treinador
@@ -222,5 +221,5 @@ trainer = Trainer(
 )
 
 # Treinamento do modelo
-torch.cuda.empty_cache()
+
 trainer.train()

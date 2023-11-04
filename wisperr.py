@@ -1,7 +1,15 @@
-
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 import torch
+import evaluate
+from datasets import Audio
+from transformers import WhisperProcessor
+from transformers import WhisperForConditionalGeneration
+from transformers import Seq2SeqTrainingArguments
+from transformers import Seq2SeqTrainer
+from transformers import WhisperFeatureExtractor
+from transformers import WhisperTokenizer
+from datasets import load_dataset, DatasetDict
 
 
 # import the relavant libraries for loggin in
@@ -103,7 +111,7 @@ def compute_metrics(pred):    #definindo as métricas de erro, no caso a wer
 
 
 # STEP 1. Download Dataset
-from datasets import load_dataset, DatasetDict
+
 
 common_voice = DatasetDict()
 
@@ -126,8 +134,7 @@ print(common_voice)
 
 
 # STEP 2. Prepare: Feature Extractor, Tokenizer and Data
-from transformers import WhisperFeatureExtractor
-from transformers import WhisperTokenizer
+
 
 # - Load Feature extractor: WhisperFeatureExtractor
 feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-large")
@@ -137,7 +144,7 @@ tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-large", language="P
 
 
 # STEP 3. Combine elements with WhisperProcessor
-from transformers import WhisperProcessor
+
 processor = WhisperProcessor.from_pretrained("openai/whisper-large", language="Portuguese", task="transcribe")
 
 
@@ -146,7 +153,7 @@ print('| Check the random audio example from Common Voice dataset to see what fo
 print(f'{common_voice["train"][0]}\n')
 
 # -> (1): Downsample from 48kHZ to 16kHZ
-from datasets import Audio
+
 common_voice = common_voice.cast_column("audio", Audio(sampling_rate=16000))
 
 print('| Check the effect of downsampling:')
@@ -163,11 +170,11 @@ common_voice = common_voice.map(
 data_collator = DataCollatorSpeechSeq2SeqWithPadding(processor=processor)
 
 # STEP 5.1. Define evaluation metric
-import evaluate
+
 metric = evaluate.load("wer")
 
 # STEP 5.3. Load a pre-trained Checkpoint
-from transformers import WhisperForConditionalGeneration
+
 model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-large")
 
 
@@ -178,7 +185,7 @@ model.config.suppress_tokens = []
 # STEP 5.4. Define the training configuration
 
 
-from transformers import Seq2SeqTrainingArguments
+
 
 training_args = Seq2SeqTrainingArguments(
     output_dir="./whisper-large-pt",  # repositorio de saida
@@ -206,7 +213,7 @@ training_args = Seq2SeqTrainingArguments(
 
 # Initialize a trainer.
 
-from transformers import Seq2SeqTrainer
+
 trainer = Seq2SeqTrainer(
     args=training_args,
     model=model,
