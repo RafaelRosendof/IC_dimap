@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 import torch
 import evaluate
+import torch.nn
 from datasets import Audio
 from transformers import WhisperProcessor
 from transformers import WhisperForConditionalGeneration
@@ -10,31 +11,21 @@ from transformers import Seq2SeqTrainer
 from transformers import WhisperFeatureExtractor
 from transformers import WhisperTokenizer
 from datasets import load_dataset, DatasetDict
-
-
-# import the relavant libraries for loggin in
-'''
-from huggingface_hub import HfApi, HfFolder
+import copy
+'''         
+from huggingface_hub import HfApi, HfFolder, create_repo,AutoModel,PushToHubCallback
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# api do hugginface
+api = HfApi()
+folder = HfFolder()
 
-def login_hugging_face(token: str) -> None:
-    """
-    Loging to Hugging Face portal with a given token.
-    """
-    api = HfApi()
-    api.set_access_token(token)
-    folder = HfFolder()
-    folder.save_token(token)
+# Set your Hugging Face Hub token
+token = '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'
+folder.save_token(token)
 
-    return None
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# STEP 0. Loging to Hugging Face
-# get your account token from https://huggingface.co/settings/tokens
-token = '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'          #################################################### login hugging face token
-login_hugging_face(token)   
+# Push your model to the Hugging Face Hub
+#create_repo("Rafaelrosendo1/whisper-rafael-pt",private=False)
+pt_model.push_to_hub(model_id="Rafaelrosendo1/whisper-rafael-pt", path="/home/rafaelrosendo/IC_dimap/my_models")
 '''
 
 def prepare_dataset(batch):
@@ -102,62 +93,48 @@ def compute_metrics(pred):    #definindo as métricas de erro, no caso a wer
 
     return {"wer": wer}
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# STEP 0. Loging to Hugging Face
-# get your account token from https://huggingface.co/settings/tokens
-#token = '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'          #################################################### login hugging face token
-#login_hugging_face(token)
-#print('We are logged in to Hugging Face now!')
 
+import random
 
-# STEP 1. Download Dataset
-
-
+# Carregue o conjunto de dados
 common_voice = DatasetDict()
+common_voice["train"] = load_dataset("mozilla-foundation/common_voice_11_0", "pt", split="train+validation[:40%]")
+common_voice["test"] = load_dataset("mozilla-foundation/common_voice_11_0", "pt", split="test[:50%]")
 
-common_voice["train"] = load_dataset("mozilla-foundation/common_voice_11_0", "pt", split="train+validation")# use_auth_token=True)
-common_voice["test"] = load_dataset("mozilla-foundation/common_voice_11_0", "pt", split="test")# use_auth_token=True)
+# Embaralhe os exemplos no conjunto de treinamento
+#random.seed(42)  # Define a semente aleatória para reprodutibilidade
+shuffled_train = common_voice["train"].shuffle(seed=42)
 
-common_voice = common_voice.remove_columns(
-    ["accent",
-     "age",
-     "client_id",
-     "down_votes",
-     "gender",
-     "locale",
-     "path",
-     "segment",
-     "up_votes"]
-    )
+# Divida o conjunto de treinamento em dois conjuntos com 50% dos dados cada
+#split_idx = len(shuffled_train) // 2
+#common_voice["train_1"] = shuffled_train.select([i for i in range(split_idx)])
+#common_voice["train_2"] = shuffled_train.select([i for i in range(split_idx, len(shuffled_train))])
 
-print(common_voice)
-
-
-# STEP 2. Prepare: Feature Extractor, Tokenizer and Data
+# Remova as colunas indesejadas dos conjuntos de treinamento
+columns_to_remove = ["accent", "age", "client_id", "down_votes", "gender", "locale", "path", "segment", "up_votes"]
+#for key in ["train"]:#coloca o train_2 caso precise
+#    common_voice[key] = common_voice[key].remove_columns(columns_to_remove)
 
 
+
+### testes acima
 # - Load Feature extractor: WhisperFeatureExtractor
 feature_extractor = WhisperFeatureExtractor.from_pretrained("openai/whisper-large")
 
 # - Load Tokenizer: WhisperTokenizer
-tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-large", language="Portuguese", task="transcribe")
+tokenizer = WhisperTokenizer.from_pretrained("openai/whisper-large", language="pt", task="transcribe")
 
 
 # STEP 3. Combine elements with WhisperProcessor
 
-processor = WhisperProcessor.from_pretrained("openai/whisper-large", language="Portuguese", task="transcribe")
+processor = WhisperProcessor.from_pretrained("openai/whisper-large", language="pt", task="transcribe")
 
 
-# STEP 4. Prepare Data
-print('| Check the random audio example from Common Voice dataset to see what form the data is in:')
-print(f'{common_voice["train"][0]}\n')
+
 
 # -> (1): Downsample from 48kHZ to 16kHZ
 
 common_voice = common_voice.cast_column("audio", Audio(sampling_rate=16000))
-
-print('| Check the effect of downsampling:')
-print(f'{common_voice["train"][0]}\n')
 
 # Prepare and use function to prepare our data ready for the Whisper AI model
 common_voice = common_voice.map(
@@ -188,8 +165,8 @@ model.config.suppress_tokens = []
 
 
 training_args = Seq2SeqTrainingArguments(
-    output_dir="./whisper-large-pt",  # repositorio de saida
-    per_device_train_batch_size=16,
+    output_dir="/home/rafaelrosendo/IC_dimap/my_models",  # repositorio de saida
+    per_device_train_batch_size=2,
     gradient_accumulation_steps=1,  
     learning_rate=1e-5,
     warmup_steps=500,
@@ -197,12 +174,12 @@ training_args = Seq2SeqTrainingArguments(
     gradient_checkpointing=True,
     fp16=True,
     evaluation_strategy="steps",
-    per_device_eval_batch_size=8,
+    per_device_eval_batch_size=2,
     predict_with_generate=True,
-    generation_max_length=225,
+    generation_max_length=500,
     save_steps=1000,
     eval_steps=1000,
-    logging_steps=25,                ###############################PARÂMETROS DE TREINAMENTO
+    logging_steps=200,                ###############################PARÂMETROS DE TREINAMENTO
     report_to=["tensorboard"],
     load_best_model_at_end=True,
     metric_for_best_model="wer",
@@ -214,7 +191,7 @@ training_args = Seq2SeqTrainingArguments(
 # Initialize a trainer.
 
 
-trainer = Seq2SeqTrainer(
+trainer_1 = Seq2SeqTrainer(
     args=training_args,
     model=model,
     train_dataset=common_voice["train"],
@@ -223,35 +200,34 @@ trainer = Seq2SeqTrainer(
     compute_metrics=compute_metrics,
     tokenizer=processor.feature_extractor,
 )
-
-# Save processor object before starting training
 processor.save_pretrained(training_args.output_dir)
-
-# STEP 5.5. Training
-"""
-Training will take appr. 5-10 hours depending on your GPU.
-"""
-print('Training is started.')
-trainer.train()  # <-- !!! Here the training starting !!!
-print('Training is finished.')
-
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 
 kwargs = {
     "dataset_tags": "mozilla-foundation/common_voice_11_0",
     "dataset": "Common Voice 11.0",  # a 'pretty' name for the training dataset
     "dataset_args": "config: lt, split: test",
     "language": "lt",
-    "model_name": "Whisper Large LT - Vytautas Bielinskas",  # a 'pretty' name for our model
+    "model_name": "Whisper Large LT - Rafael_Rosendo",  #my name
     "finetuned_from": "openai/whisper-large",
     "tasks": "automatic-speech-recognition",
     "tags": "hf-asr-leaderboard",
 }
 
+from huggingface_hub import HfApi, HfFolder
 
-'''
-trainer.push_to_hub(**kwargs)
-print('Trained model uploaded to the Hugging Face Hub')
-'''
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+api = HfApi()
+folder = HfFolder()
+
+# Set your Hugging Face Hub token
+token = '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'
+folder.save_token(token)
+
+# Push your model to the Hugging Face Hub
+#create_repo("Rafaelrosendo1/whisper-rafael-pt",private=False)
+#pt_model.push_to_hub(model_id="Rafaelrosendo1/whisper-rafael-pt", path="/home/rafaelrosendo/IC_dimap/my_models")
+
+
+trainer_1.push_to_hub("Rafaelrosendo1/whisper-rafael-pt")
+#print('Trained model uploaded to the Hugging Face Hub')
+
