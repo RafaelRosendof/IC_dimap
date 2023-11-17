@@ -20,6 +20,7 @@ from transformers import WhisperFeatureExtractor
 from transformers import WhisperTokenizer
 from datasets import load_dataset, DatasetDict
 import copy
+import jiwer
 
 
 def prepare_dataset(batch):
@@ -69,7 +70,7 @@ class DataCollatorSpeechSeq2SeqWithPadding:
         return batch
 
 
-def compute_metrics(pred):    #Definition of the WER metric
+def compute_metrics(pred,tokenizer):    #Definition of the WER metric
     """
     Define evaluation metrics. We will use the Word Error Rate (WER) metric.
     For more information, check:
@@ -84,17 +85,19 @@ def compute_metrics(pred):    #Definition of the WER metric
     pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
     label_str = tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
-    wer = 100 * metric.compute(predictions=pred_str, references=label_str)
+    wer_metric = jiwer.WER()
+
+    wer = 100 * wer_metric.compute(predictions=pred_str, references=label_str)
+
+    print(f"wer: {wer}")
 
     return {"wer": wer}
 
 
-import random
-
 #load the datasets from the common voice
 common_voice = DatasetDict()
-common_voice["train"] = load_dataset("mozilla-foundation/common_voice_11_0", "pt", split="train+validation[:70%]")
-common_voice["test"] = load_dataset("mozilla-foundation/common_voice_11_0", "pt", split="test[:50%]")
+common_voice["train"] = load_dataset("mozilla-foundation/common_voice_11_0", "pt", split="train+validation[:40%]")
+common_voice["test"] = load_dataset("mozilla-foundation/common_voice_11_0", "pt", split="test[:30%]")
 
 print (len(common_voice["train"])),
 
@@ -149,11 +152,11 @@ model.config.suppress_tokens = []
 
 training_args = Seq2SeqTrainingArguments(
     output_dir="/home/rafaelrosendo/IC_dimap/my_models",  # Output directory for the model
-    per_device_train_batch_size=4,
-    gradient_accumulation_steps=1,  
-    learning_rate=1e-5,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=16,  
+    learning_rate=5e-7,
     warmup_steps=500,
-    max_steps=5000,
+    max_steps=4000,
     gradient_checkpointing=True,
     fp16=True,
     evaluation_strategy="steps",
@@ -183,6 +186,34 @@ trainer_1 = Seq2SeqTrainer(
     compute_metrics=compute_metrics,
     tokenizer=processor.feature_extractor,
 )
+
+print("metrica:  " )
+print(metric) 
+
+'''
+#for here to processor.save_pretrained_ is tests
+# Training loop
+some_interval = 50
+for step in range(training_args.max_steps):
+    # Train the model on a batch
+    trainer_1.train()
+
+    # Evaluate the model at certain steps
+    if step % training_args.eval_steps == 0:
+        trainer_1.evaluate()
+
+    # Save the model at certain steps
+    if step % training_args.save_steps == 0:
+        trainer_1.save_model()
+
+    # Print or log training information at certain steps
+    if step % training_args.logging_steps == 0:
+        print(f"Step {step}: Loss - {trainer_1.log_metrics['loss']}")
+
+    # Release cached GPU memory
+    if step % some_interval == 0:
+        torch.cuda.empty_cache()
+'''
 processor.save_pretrained(training_args.output_dir)
 
 kwargs = {
@@ -196,21 +227,26 @@ kwargs = {
     "tags": "hf-asr-leaderboard",
 }
 
+
+print("#####################################################################")
+print("#####################################################################")
+print("#####################################################################")
+print("#####################################################################")
+
+# Evaluate the model after training is complete
+
+
+
 from huggingface_hub import HfApi, HfFolder
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 api = HfApi()
 folder = HfFolder()
 
-# Set your Hugging Face Hub token
-token = 'the secret token you can put here '
+token = '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'
 folder.save_token(token)
 
-# Push your model to the Hugging Face Hub
-#create_repo("Rafaelrosendo1/whisper-rafael-pt",private=False)
-#pt_model.push_to_hub(model_id="Rafaelrosendo1/whisper-rafael-pt", path="/home/rafaelrosendo/IC_dimap/my_models")
 
-
-trainer_1.push_to_hub("Rafaelrosendo1/whisper-rafael-pt")
+#trainer_1.push_to_hub("Rafaelrosendo1/whisper-rafael-pt")
 #print('Trained model uploaded to the Hugging Face Hub')
 
