@@ -1,0 +1,10 @@
+filepath,mos,condition,db
+./data/ground_truth/dataset_oficial_copel-0606.wav,4.333333333333333,profissional,ground_truth
+./data/ground_truth/ground_truth_gm_crime_pe_amaro-1064.wav,5.0,profissional,ground_truth
+./data/ground_truth/GS1-0016.wav,5.0,profissional,ground_truth
+./data/ground_truth/ground_truth_pe_isaura_f-0071.wav,4.0,profissional,ground_truth
+./data/ground_truth/GS1-0004.wav,5.0,profissional,ground_truth
+./data/ground_truth/ground_truth_gm_crime_pe_amaro-1061.wav,5.0,profissional,ground_truth
+./data/ground_truth/ground_truth_dr_onu-2012-0016.wav,5.0,profissional,ground_truth
+./data/ground_truth/dataset_oficial_copel-0597.wav,5.0,profissional,ground_truth
+./data/ground_truth/ground_truth_pe_isaura_f-0068.wav,5.0,profissional,ground_truth

@@ -1,0 +1,4 @@
+filepath,mos,condition,db
+./data/taco-gst2waveglow/msc_d_tunner_tacotron_gst_waveglow_1_9.wav,5.0,synthesized,taco_gst2waveglow
+./data/taco-gst2waveglow/msc_d_tunner_tacotron_gst_waveglow_0_7.wav,4.333333333333333,synthesized,taco_gst2waveglow
+./data/taco-gst2waveglow/msc_d_tunner_tacotron_gst_waveglow_0_1.wav,4.125,synthesized,taco_gst2waveglow
